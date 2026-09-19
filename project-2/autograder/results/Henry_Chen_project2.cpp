@@ -1,14 +1,14 @@
-Homework Test Results
+Project 2 Test Results
+
+TestCase                                Result
+================================================================
+birthday-1.cpp                          10/10
+birthday-2.cpp                          Crashed due to signal -6:
+munmap_chunk(): invalid pointer
+
 
 ================================================================
-Failed to precompile:
-.../Henry_Chen_project2.cpp:12:10: fatal error: sha256.h: No such file or directory
-   12 | #include "sha256.h"
-      |          ^~~~~~~~~~
-compilation terminated.
-
-================================================================
-Result: 0/100
+Result: 38/75
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error
