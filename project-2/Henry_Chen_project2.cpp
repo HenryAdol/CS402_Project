@@ -9,12 +9,12 @@
 #include "sha256.c"
 
 // be sure to change FIRSTNAME and LASTNAME with your own first and last name
-#include "Firstname_Lastname_project2.h"
+#include "Henry_Chen_project2.h"
 
 using namespace std;
 
 const string who_am_i() {
-    return "Firstname_Lastname";
+    return "Henry_Chen";
 }
 
 /****************
@@ -107,6 +107,23 @@ vector<unsigned int> birthday_attack_1(function<unsigned short(unsigned int)> ha
     // signatures match the `test_hash` function signature.
     
     // Your code here!
+
+    for (int i = 0; i < 2; i++) {
+        vector <unsigned int> random_numbers;
+        for (int j = 0; j < 350; j++) {
+            unsigned int num = sample_int();
+            random_numbers.push_back(num);
+        }
+        
+        for (int j = 0; j < random_numbers.size(); j++) {
+            for (int k = j + 1; k < random_numbers.size(); k++) {
+                if (hash_function(random_numbers[j]) == hash_function(random_numbers[k])) {
+                    return {random_numbers[j], random_numbers[k]};
+                }
+            }
+        }
+    }
+    return {};
 }
 
 
@@ -374,5 +391,8 @@ int merkle_verify_full(const string root, const vector<std::string> list) {
 
 
 int main() {
+    vector<unsigned int> out = birthday_attack_1(test_hash);
+
+
     return 0;
 }
