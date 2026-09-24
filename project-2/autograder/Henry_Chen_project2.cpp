@@ -108,13 +108,17 @@ vector<unsigned int> birthday_attack_1(function<unsigned short(unsigned int)> ha
     
     // Your code here!
 
-    for (int i = 0; i < 2; i++) {
+    // 5 Batches to check for collision
+    for (int i = 0; i < 5; i++) {
         vector <unsigned int> random_numbers;
+
+        // Generate 350 integers
         for (int j = 0; j < 350; j++) {
             unsigned int num = sample_int();
             random_numbers.push_back(num);
         }
         
+        // Check for any collisions (exclude checking integer with itself)
         for (int j = 0; j < random_numbers.size(); j++) {
             for (int k = j + 1; k < random_numbers.size(); k++) {
                 if (hash_function(random_numbers[j]) == hash_function(random_numbers[k])) {
@@ -177,6 +181,22 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
     // signatures match the `test_hash` function signature.
     
     // Your code here!
+
+    unsigned short tort = hash_function(0);
+    unsigned short hare = hash_function(hash_function(0));
+
+    while (tort != hare) {
+        tort = hash_function(tort);
+        hare = hash_function(hash_function(hare));
+    }
+    
+    tort = 0;
+    while (hash_function(tort) != hash_function(hare)) {
+        tort = hash_function(tort);
+        hare = hash_function(hare);
+    }
+    
+    return {tort, hare};
 }
 
 
@@ -392,7 +412,7 @@ int merkle_verify_full(const string root, const vector<std::string> list) {
 
 int main() {
     vector<unsigned int> out = birthday_attack_1(test_hash);
-
+    vector<unsigned int> out2 = birthday_attack_2(test_hash);
 
     return 0;
 }

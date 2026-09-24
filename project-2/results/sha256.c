@@ -1,11 +1,14 @@
-Project 2 Test Results
+Homework Test Results
 
-TestCase                                Result
 ================================================================
-birthday-1.cpp                          10/10
-birthday-2.cpp                          10/10
+Failed to precompile:
+.../sha256.c:28:10: fatal error: sha256.h: No such file or directory
+   28 | #include "sha256.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+
 ================================================================
-Result: 75/75
+Result: 0/100
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error
