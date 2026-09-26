@@ -11,7 +11,7 @@ const std::string who_am_i();
 const std::string filename = "/grading_dir/results/feedback/" + who_am_i() + " [merkle_verify_full].txt";
 
 
-int merkle_verify_full(const std::string root, const std::vector<std::string> list, std::function<std::string(std::string)> hash_function);
+int merkle_verify_full(const std::string root, const std::vector<std::string>& list, std::function<std::string(std::string)> hash_function);
 
 string halfSHA(string s) {
     string out = SHA256::hashString(s);

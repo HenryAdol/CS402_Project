@@ -376,7 +376,7 @@ int merkle_verify_position(
  *          size n, where n is NOT a power of 2.
  */
 
-int merkle_verify_full(const string root, const vector<std::string> list, function<string(string)> hash_function) {
+int merkle_verify_full(const string root, const vector<std::string>& list, function<string(string)> hash_function) {
 }
 
 
