@@ -242,6 +242,34 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
 
 
 string merkle_commit(const vector<string>& list, function<string(string)> hash_function) {
+
+    // Checking if list is empty
+    if (list.empty()) {
+        return "";
+    }
+
+    // Hashes all the leaf nodes first
+    vector<string> hashes;
+
+    for (int i = 0; i < list.size(); ++i) {
+        hashes.push_back(hash_function(list[i]));
+    }
+
+
+    // Builds each new layer based on previous layer
+    while (hashes.size() > 1) {
+        vector<string> new_level;
+
+        for (int i = 0; i < hashes.size(); i+=2) {
+            string combined_hash = hashes[i] + hashes[i + 1];
+            string new_hash = hash_function(combined_hash);
+            new_level.push_back(new_hash);
+        }
+
+        hashes = new_level;
+    }
+
+    return hashes[0];
 }
 
  /* 2. The Positional Open Algorithm (20 points)
@@ -406,6 +434,7 @@ int merkle_verify_position(
  */
 
 int merkle_verify_full(const string root, const vector<std::string> list) {
+    return root == merkle_commit(list, SHA256::hashString)? 0 : 1;
 }
 
 
@@ -413,6 +442,15 @@ int merkle_verify_full(const string root, const vector<std::string> list) {
 int main() {
     vector<unsigned int> out = birthday_attack_1(test_hash);
     vector<unsigned int> out2 = birthday_attack_2(test_hash);
+
+    vector<string> test_string = {"hello", "world"};
+    string root = merkle_commit(test_string, SHA256::hashString);
+
+    cout << root << endl;
+    cout << merkle_verify_full(root, test_string);
+
+    test_string[0] = "HELLO";
+    cout << merkle_verify_full(root, test_string);
 
     return 0;
 }

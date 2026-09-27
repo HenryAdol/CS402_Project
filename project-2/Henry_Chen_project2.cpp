@@ -108,13 +108,17 @@ vector<unsigned int> birthday_attack_1(function<unsigned short(unsigned int)> ha
     
     // Your code here!
 
-    for (int i = 0; i < 2; i++) {
+    // 5 Batches to check for collision
+    for (int i = 0; i < 5; i++) {
         vector <unsigned int> random_numbers;
+
+        // Generate 350 integers
         for (int j = 0; j < 350; j++) {
             unsigned int num = sample_int();
             random_numbers.push_back(num);
         }
         
+        // Check for any collisions (exclude checking integer with itself)
         for (int j = 0; j < random_numbers.size(); j++) {
             for (int k = j + 1; k < random_numbers.size(); k++) {
                 if (hash_function(random_numbers[j]) == hash_function(random_numbers[k])) {
@@ -177,6 +181,22 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
     // signatures match the `test_hash` function signature.
     
     // Your code here!
+
+    unsigned short tort = hash_function(0);
+    unsigned short hare = hash_function(hash_function(0));
+
+    while (tort != hare) {
+        tort = hash_function(tort);
+        hare = hash_function(hash_function(hare));
+    }
+    
+    tort = 0;
+    while (hash_function(tort) != hash_function(hare)) {
+        tort = hash_function(tort);
+        hare = hash_function(hare);
+    }
+    
+    return {tort, hare};
 }
 
 
@@ -206,8 +226,7 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
  *      - A Merkle tree is a complete binary tree with 2^n leaves, 
  *          where each node in the tree is labeled as follows.
  *          - Order each leaf, from left to right, as 0, 1, ..., 2^n - 1.
- *              Leaf i is labeled with hash_function(list[i] + "i").
- *              Note that list[i] is a string, and "i" is the string representation of index i.
+ *              Leaf i is labeled with hash_function(list[i])
  *          - For each non-leaf node w with child nodes u, v and labels
  *              hash_u, hash_v, the label of w is hash_w = hash_function(hash_u || hash_v),
  *              where hash_u || hash_v denotes string concatenation.
@@ -223,6 +242,34 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
 
 
 string merkle_commit(const vector<string>& list, function<string(string)> hash_function) {
+
+    // Checking if list is empty
+    if (list.empty()) {
+        return "";
+    }
+
+    // Hashes all the leaf nodes first
+    vector<string> hashes;
+
+    for (int i = 0; i < list.size(); ++i) {
+        hashes.push_back(hash_function(list[i]));
+    }
+
+
+    // Builds each new layer based on previous layer
+    while (hashes.size() > 1) {
+        vector<string> new_level;
+
+        for (int i = 0; i < hashes.size(); i+=2) {
+            string combined_hash = hashes[i] + hashes[i + 1];
+            string new_hash = hash_function(combined_hash);
+            new_level.push_back(new_hash);
+        }
+
+        hashes = new_level;
+    }
+
+    return hashes[0];
 }
 
  /* 2. The Positional Open Algorithm (20 points)
@@ -230,11 +277,9 @@ string merkle_commit(const vector<string>& list, function<string(string)> hash_f
  *      - vector<string> list: a vector of strings, assumed to be a power of 2.
  *      - function<string(string)> hash_function: a hash function from strings to strings
  *      - unsigned int i: the position list[i] to be opened.
- *          - ASSUMPTION: i < list.size() is always true!
  *  Output:
- *      - vector<pair<string,string>> proof: a proof certifying that list[i] is consistent
- *          with the given commitment root. proof[0] is required to be the value pair("L", list[i])
- *          if list[i] is a left leaf node, or pair("R", list[i]) if it is a right leaf node.
+ *      - vector<string> proof: a proof certifying that list[i] is consistent
+ *          with the given commitment root. proof[0] is required to be the value list[i].
  *  Algorithm:
  *      - Merkle trees are awesome because they allow us to certify that a list[i] is consistent
  *          with a computed Merkle root "hash", for any position i, without giving away the
@@ -244,34 +289,31 @@ string merkle_commit(const vector<string>& list, function<string(string)> hash_f
  *      - Intuitively, you can construct the proof as follows
  *          - In the complete binary tree representing the merkle root computation, 
  *              draw a leaf-to-root path the leaf list[i] to the root.
- *          - Determine if leaf list[i] is a left or right leaf node.
- *          - Append ("L", list[i]) to the proof if it is a left leaf node, 
- *              or ("R", list[i]) if it is a right leaf node.
+ *          - Add list[i] to the proof.
  *          - For every node on the root-to-leaf path that is not a leaf node:
- *              - add the the tuple (left_or_right, label) (i.e., hash) to the proof, where
- *                  - label is the hash of its child that is NOT on the root to leaf path; and
- *                  - left_or_right = "L" or "R" depending on if it is a left or right child.
+ *              - add the label (i.e., hash) of its child that is NOT on the 
+ *                  root to leaf path to the proof.
  *      - One algorithm for obtaining this proof is given below recursively
- *          - if the list is of size 1, add ("L", list[0]) to proof and return.
+ *          - if the list is of size 1, add list[i] to proof and return.
  *          - otherwise, divide the list into two halves: list_left, list_right.
  *              - if index i is in list_left:
  *                  - recurse on list_left
  *                  - merkle hash list_right, obtaining root_right
- *                  - add ("R", root_right) to the proof
+ *                  - add root_right to the proof
  *              - otherwise, index i is in list_right:
  *                  - recurse on list_right
  *                  - merkle hash list_left, obtaining root_left
- *                  - add ("L", root_left) to the proof
+ *                  - add root_left to the proof
  *      - Note: there are other algorithms to compute the proof.
  *      - IMPORTANT: the order of the proof matters. The value
  *          proof[i] must come from level i of the complete binary tree.
  *          An example is given below.
  *          - Suppose you are asked to prove the value list[2] = C is consistent
- *              with the Merkle root root_hash.
+ *              with the Merkle root R.
  *          - Below is the complete binary tree of labels, where the label of a node is the
  *              hash of both its child nodes, concatenated in order left to right.
  *
- *              root_hash
+ *                 R
                   / \
                  /   \
                 /     \
@@ -288,25 +330,23 @@ string merkle_commit(const vector<string>& list, function<string(string)> hash_f
        |  |   |  |  |  |    |  |
 list=[ A, B,  C, D, E, F,   G, H ]
 
- *      - To prove that C is consistent with Merkle root root_hash, you must add all information
- *          to the proof string `proof` which is needed to recover the hash value root_hash.
- *      - To do this, must add all hash values needed to compute root_hash from node C. To figure out
- *          which hashes you need, consider the leaf-to-root path from root_hash to C, which is
+ *      - To prove that C is consistent with Merkle root R, you must add all information
+ *          to the proof string `proof` which is needed to recover the hash value R.
+ *      - To do this, must add all hash values needed to compute R from node C. To figure out
+ *          which hashes you need, consider the leaf-to-root path from R to C, which is
  *          C -- h2 -- h9 -- h12 -- R.
- *      - Starting from the bottom, to compute hash h2, all you need is the value C. We also
- *          want to include if this node is a left or right node to help the verifier. In the
- *          above picture, C is a left node, so we'll use "L" to mark this. Now, we add the
- *          pair ("L", C) to the proof, giving proof = [ ("L", C) ]
+ *      - Starting from the bottom, to compute hash h2, all you need is the value C. So you add
+ *          C to the proof, giving proof = [ C ]
  *      - To compute hash value h9, you need h2 and h3. You can compute h2 from C (in the proof), 
- *          so all you need is h3. The proof becomes proof = [ ("L",C), ("R",h3) ].
+ *          so all you need is h3. The proof becomes proof = [ C, h3 ].
  *      - Now, you need to compute h12. To do so, you need h8 and h9. In the proof so far, you have
  *          C and h3, which allows you to compute h9. So you must now add h8 to the proof, giving
- *          proof = [ ("L",C), ("R",h3), ("L",h8) ].
- *      - Finally, to compute root_hash, you need h12 and h13. From the current proof, you can compute h12
+ *          proof = [ C, h3, h8 ].
+ *      - Finally, to compute R, you need h12 and h13. From the current proof, you can compute h12
  *          since you are given h8 and can compute h9 from the remainder of the proof. So we must
- *          add h13 to the proof, giving proof = [ ("L",C), ("R",h3), ("L",h8), ("R",h13) ].
- *      - The final proof is [("L",C), ("R",h3), ("L",h8), ("R",h13)], since this gives you all information 
- *      needed to compute the root root_hash.
+ *          add h13 to the proof, giving proof = [ C, h3, h8, h13 ].
+ *      - The final proof is [C, h3, h8, h13], since this gives you all information needed to compute
+ *          the root R.
  *
  *
  *  EXTRA CREDIT:
@@ -316,7 +356,7 @@ list=[ A, B,  C, D, E, F,   G, H ]
  *          size n, where n is NOT a power of 2.
  */
 
-vector<pair<string,string>> merkle_open_position(
+vector<string> merkle_open_position(
     const vector<string>& list, 
     function<string(string)> hash_function, 
     const unsigned int i
@@ -338,26 +378,25 @@ vector<pair<string,string>> merkle_open_position(
  *  Algorithm:
  *      - Given the string proof, you must now verify that it is consistent with the root.
  *      - Assuming the proof is in the correct order, verification proceeds as follows:
- *          - compute h = hash_function(proof[0].second+"i")
- *          - for pair p in proof[1:] (i.e., to the end of the proof)
- *              - determine whether p is the left or right input to the hash function,
- *                  given by p.first
- *              - compute h = hash_function(p.second || h) or hash_function(h || p.second) 
- *              based on the above decision
- *          - check if h == root and return an appropriate value
+ *          - compute h = hash_function(proof[0])
+ *          - for p in proof[1:] (i.e., to the end of the proof)
+ *              - determine whether p is the left or right input to the hash function
+ *              - compute h = hash_function(p || h) or hash_function(h || p) based on
+ *                  the above decision
+ *          - check if h == R and return an appropriate value
  *      - IMPORTANT
  *          - Remember that the Merkle tree is built in a position dependent way, which
  *              means that the label of a node is the hash of the concatenation of its
  *              left and right child labels. This means you need to figure out in the
  *              returned proof if the label you are given is a left or right child.
  *          - Example from merkle_open_position: the proof you are given is
- *              proof = [ ("L",C), ("R",h3), ("L",h8), ("R",h13) ]. 
+ *              proof = [ C, h3, h8, h13 ]. 
  *              - h2 = hash_function(C), and is a left child, while h3 is a right child.
  *                  So to compute h9, you must compute hash_function(h2||h3).
  *              - h8 is a left child and h9 is a right child, so to compute h12, you must
  *                  compute hash_function(h8||h9).
  *              - h12 is a left child and h13 is a right child, so you must compute
- *                  h = hash_function(h12||h13), then compare h to root.
+ *                  h = hash_function(h12||h13), then compare h to R.
  *
  *
  *  EXTRA CREDIT:
@@ -367,7 +406,7 @@ vector<pair<string,string>> merkle_open_position(
 
 int merkle_verify_position(
     const string root, 
-    const vector<pair<string,string>>& proof, 
+    const vector<string>& proof, 
     function<string(string)> hash_function, 
     const unsigned int i
 ) {
@@ -395,55 +434,14 @@ int merkle_verify_position(
  */
 
 int merkle_verify_full(const string root, const vector<std::string> list) {
+    return root == merkle_commit(list, SHA256::hashString)? 0 : 1;
 }
 
 
-// Here are some tests to check if you are correctly computing the
-// Merkle root and proofs with respect to the below test_vec's.
-// All tests are with respect to the hash function 
-// SHA256::hashString(const std::string& str) defined in sha256.h.
-const vector<string> test_vec1 {"a", "b", "c", "d", "e", "f", "g", "h" };
-const string test_vec1_merkle_root = "03d17ec0ddabb9af008dce3964169c576491f112481ef00d1e1ed93f8ff36673";
-
-// Merkle proof for test_vec1[2] = "c"
-const vector<pair<string,string>> test_vec1_proof_of_2 = {
-    {"L",test_vec1[2]},
-    {"R","f451a61749c611ba0fa0e16c61831db44f38c611dff25879cf271a24c81a88b6"}, // SHA256::hashString("d3")
-    {"L","09fc26616cb10a1249d12c2ce0837e194f90a0f737d474ae827e50be5fbcafe8"}, // SHA256::hashString( SHA256::hashString("a0") + SHA256::hashString("b1") )
-    {"R","3b73ae5b262f6e0c074cb04d9487ecd34ca2058722deb80cae9576d8365218a5"}, // SHA256::hashString( SHA256::hashString(SHA256::hashString("e4") + SHA256::hashString("f5")) + SHA256::hashString(SHA256::hashString("g6") + SHA256::hashString("h7"))  )
-};
-
-// above was generated using the following link and sha256 to get the complete hashes for each proof
-// https://www.cipherdecipher.com/tools/merkle-tree-calculator?input=a0%0Ab1%0Ac2%0Ad3%0Ae4%0Af5%0Ag6%0Ah7&proof=1&idx=2
-
-const vector<string> test_vec2 = {"hello", "world!"};
-const string test_vec2_merkle_root = "45bc2c583b1d8ebb501fcc2f29d0330f316649bbf23d76feee22b64e6b67972b";
-// Merkle proof for test_vec2[1] = "world!"
-const vector<pair<string,string>> test_vec2_proof_of_1 = {
-    {"R", test_vec2[1]},
-    {"L", "5a936ee19a0cf3c70d8cb0006111b7a52f45ec01703e0af8cdc8c6d81ac5850c"}
-};
-// see https://www.cipherdecipher.com/tools/merkle-tree-calculator?input=hello0%0Aworld%211&proof=1&idx=1
-
-const vector<string> test_vec3 = {"Merkle", "trees", "are", "cool!"};
-const string test_vec3_merkle_root = "4683d51abcd4e5b01faec86dd4efaca78e669176d10a3f047c90790bab793cc2";
-// Merkle proof for test_vec3[3]
-const vector<pair<string,string>> test_vec3_proof_of_3 = {
-    {"R", test_vec3[3]},
-    {"L", "07b83ebd03651aa06a3e788f04cf1875a063005f2bece50e46cd8d3736bfa23d"},
-    {"L", "d60697595896c2a90bcffa77d76dd7cd25b46034d7c7f2310b692c9d97d53624"}
-};
-// see https://www.cipherdecipher.com/tools/merkle-tree-calculator?input=Merkle0%0Atrees1%0Aare2%0Acool%213&proof=1&idx=3
-
-
-
-// the following link can be used to help verify other tests you may have with respect
-// to SHA256
-// https://www.cipherdecipher.com/tools/merkle-proof-verifier
 
 int main() {
     vector<unsigned int> out = birthday_attack_1(test_hash);
-
+    vector<unsigned int> out2 = birthday_attack_2(test_hash);
 
     return 0;
 }
