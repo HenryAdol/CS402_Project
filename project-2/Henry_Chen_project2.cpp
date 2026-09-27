@@ -261,9 +261,7 @@ string merkle_commit(const vector<string>& list, function<string(string)> hash_f
         vector<string> new_level;
 
         for (int i = 0; i < hashes.size(); i+=2) {
-            string combined_hash = hashes[i] + hashes[i + 1];
-            string new_hash = hash_function(combined_hash);
-            new_level.push_back(new_hash);
+            new_level.push_back(hash_function(hashes[i] + hashes[i + 1]));
         }
 
         hashes = new_level;
@@ -356,13 +354,14 @@ list=[ A, B,  C, D, E, F,   G, H ]
  *          size n, where n is NOT a power of 2.
  */
 
-vector<string> merkle_open_position(
+vector<pair<string,string>> merkle_open_position(
     const vector<string>& list, 
     function<string(string)> hash_function, 
     const unsigned int i
 ) {
     
 }
+
 
 
 
@@ -406,7 +405,7 @@ vector<string> merkle_open_position(
 
 int merkle_verify_position(
     const string root, 
-    const vector<string>& proof, 
+    const vector<pair<string,string>>& proof, 
     function<string(string)> hash_function, 
     const unsigned int i
 ) {
@@ -433,8 +432,8 @@ int merkle_verify_position(
  *          size n, where n is NOT a power of 2.
  */
 
-int merkle_verify_full(const string root, const vector<std::string> list) {
-    return root == merkle_commit(list, SHA256::hashString)? 0 : 1;
+int merkle_verify_full(const string root, const vector<std::string>& list, function<string(string)> hash_function) {
+    return root == merkle_commit(list, hash_function)? 0 : 1;
 }
 
 
@@ -443,5 +442,12 @@ int main() {
     vector<unsigned int> out = birthday_attack_1(test_hash);
     vector<unsigned int> out2 = birthday_attack_2(test_hash);
 
+    vector<string> test = {"hello", "world!"};
+
+    string root = merkle_commit(test, SHA256::hashString);
+
+    cout << root << endl;
+
     return 0;
+
 }
