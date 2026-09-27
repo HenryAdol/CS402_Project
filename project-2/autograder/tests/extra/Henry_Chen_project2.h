@@ -1,7 +1,7 @@
 
 // be sure to change FIRSTNAME and LASTNAME with your own first and last name
-#ifndef HENRY_CHEN_PROJECT2
-#define HENRY_CHEN_PROJECT2
+#ifndef Henry_Chen_PROJECT2
+#define Henry_Chen_PROJECT2
 
 #include <functional>
 #include <string>
