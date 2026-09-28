@@ -180,6 +180,21 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
     // signatures match the `test_hash` function signature.
     
     // Your code here!
+    unsigned short tort = hash_function(0);
+    unsigned short hare = hash_function(hash_function(0));
+
+    while (tort != hare) {
+        tort = hash_function(tort);
+        hare = hash_function(hash_function(hare));
+    }
+    
+    tort = 0;
+    while (hash_function(tort) != hash_function(hare)) {
+        tort = hash_function(tort);
+        hare = hash_function(hare);
+    }
+    
+    return {tort, hare};
 }
 
 
@@ -226,6 +241,39 @@ vector<unsigned int> birthday_attack_2(function<unsigned short(unsigned int)> ha
 
 
 string merkle_commit(const vector<string>& list, function<string(string)> hash_function) {
+
+    // Checking if list is empty
+    if (list.empty()) {
+        return "";
+    }
+
+    vector<string> level;
+
+    // Hashing all the leaf nodes first
+    for (unsigned int i = 0; i < list.size(); i++) {
+        level.push_back(hash_function(list[i] + to_string(i)));
+    }
+
+    // Builds each new layer from the previous layer
+    while (level.size() > 1) {
+        vector<string> next_level;
+
+        for (unsigned int i = 0; i < level.size(); i += 2) {
+
+            // If level size is power of 2, then just hash itself and next neighbor
+            if (i + 1 < level.size()) {
+                next_level.push_back(hash_function(level[i] + level[i + 1]));
+            }
+            // If level size is not power of 2, add a duplicate of the last leaf node
+            else {
+                next_level.push_back(level[i]);
+            }
+        }
+
+        level = next_level;
+    }
+
+    return level[0];
 }
 
  /* 2. The Positional Open Algorithm (20 points)
@@ -320,12 +368,52 @@ list=[ A, B,  C, D, E, F,   G, H ]
  */
 
 vector<pair<string,string>> merkle_open_position(
-    const vector<string>& list, 
-    function<string(string)> hash_function, 
+    const vector<string>& list,
+    function<string(string)> hash_function,
     const unsigned int i
 ) {
-    
+    vector<pair<string,string>> proof;
+
+    // First item needs to contain the original unhashed value
+    if (i % 2 == 0) {
+        proof.push_back({"L", list[i]});
+    } else {
+        proof.push_back({"R", list[i]});
+    }
+
+    // Build the level by hashing each leaf
+    vector<string> level;
+    for (unsigned int j = 0; j < list.size(); j++) {
+        level.push_back(hash_function(list[j] + to_string(j)));
+    }
+
+    unsigned int position = i;
+
+    // For each new layer, get the sibling node to compute its parents
+    while (level.size() > 1) {
+        // If the current node is on the left then sibling node is on the right
+        if (position % 2 == 0) {
+            proof.push_back({"R", level[position + 1]});
+        } else {
+            // If the current node is on the right then sibling node is on the left
+            proof.push_back({"L", level[position - 1]});
+        }
+
+        // Builds the parent level
+        vector<string> next_level;
+        for (unsigned int j = 0; j < level.size(); j += 2) {
+            next_level.push_back(
+                hash_function(level[j] + level[j + 1])
+            );
+        }
+
+        level = next_level;
+        position /= 2;
+    }
+
+    return proof;
 }
+
 
 
 
@@ -369,12 +457,44 @@ vector<pair<string,string>> merkle_open_position(
  */
 
 int merkle_verify_position(
-    const string root, 
-    const vector<pair<string,string>>& proof, 
-    function<string(string)> hash_function, 
+    const string root,
+    const vector<pair<string,string>>& proof,
+    function<string(string)> hash_function,
     const unsigned int i
 ) {
+    // Checks if proof is empty
+    if (proof.empty()) {
+        return 1;
+    }
+
+    // The first element has to be the original leaf
+    if (proof[0].first != "L" && proof[0].first != "R") {
+        return 1;
+    }
+
+    string current_hash = hash_function(proof[0].second + to_string(i));
+
+    // Each item is a sibling 
+    for (unsigned int j = 1; j < proof.size(); j++) {
+        string direction = proof[j].first;
+        string sibling_hash = proof[j].second;
+
+        // If the sibling node is left then current hash is right
+        if (direction == "L") {
+            current_hash = hash_function(sibling_hash + current_hash);
+        }
+        // If the sibling node is right then current hash is left
+        else if (direction == "R") {
+            current_hash = hash_function(current_hash + sibling_hash);
+        }
+        else {
+            return 1;
+        }
+    }
+
+    return (current_hash == root) ? 0 : 1;
 }
+
 
 
  /* 4. The Full Verify Algorithm (5 points)
@@ -397,6 +517,7 @@ int merkle_verify_position(
  */
 
 int merkle_verify_full(const string root, const vector<std::string>& list, function<string(string)> hash_function) {
+    return (root == merkle_commit(list, hash_function))? 0 : 1;
 }
 
 
