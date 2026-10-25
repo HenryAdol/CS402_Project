@@ -1,6 +1,6 @@
 
-#ifndef FIRSTNAME_LASTNAME_PROJECT3
-#define FIRSTNAME_LASTNAME_PROJECT3
+#ifndef Henry_Chen_PROJECT3
+#define Henry_Chen_PROJECT3
 
 #include <vector>
 #include <string>
