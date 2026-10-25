@@ -253,6 +253,59 @@ vector<int> weird_traversal(TreeNode* root) {
 
 // Do not modify this fuction signature
 TreeNode* bits_to_tree(const vector<bool>& bits) {
+    TreeNode* root = new TreeNode{0, nullptr, nullptr};
+
+    // If tree is only root node
+    if (bits.size() == 0) {
+        return root;
+    }
+
+    // Keep track of traversal path
+    stack<TreeNode*> path;
+    path.push(root);
+    int next_id = 1;
+
+    // Go through each bit
+    for (bool bit : bits) {
+
+        // If "down" traversal
+        if (bit == 1) {
+            
+            // Create a new node with new id 
+            TreeNode * curr = path.top();
+            TreeNode* new_child = new TreeNode{next_id, nullptr, nullptr};
+            next_id = next_id + 1;
+
+            // Check if its firt child exists
+            if (curr->first_child == nullptr) {
+                curr->first_child = new_child;
+            }
+            // If first child already exists, keep going down the "next_sibling" until the end
+            else {
+                TreeNode * last_child = curr->first_child;
+                while(last_child->next_sibling) {
+                    last_child = last_child->next_sibling;
+                }
+                last_child->next_sibling = new_child;
+            }
+            
+            path.push(new_child);
+        }
+        // If "up" traversal
+        else {
+            // You can't go further "up" from the root node
+            if (path.size() == 1) {
+                return nullptr;
+            }
+            path.pop();
+        }
+    }
+
+    // Makes sure the given traversal is valid
+    if (path.size() != 1) {
+        return nullptr;
+    }
+    return root;
 }
 
 

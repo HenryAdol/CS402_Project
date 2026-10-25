@@ -2,13 +2,13 @@ Project 3 Test Results
 
 TestCase                                Result
 ================================================================
-bits-to-tree.cpp                        0.0/25 (Wrong answer)
+bits-to-tree.cpp                        25/25
 parse-tree.cpp                          Crashed due to signal 0:
 
 
 weird.cpp                               25/25
 ================================================================
-Result: 25/75
+Result: 50/75
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error
