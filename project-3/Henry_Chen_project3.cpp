@@ -2,6 +2,9 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <stack>
+#include <queue>
+#include <utility>
 
 // be sure to change FIRSTNAME and LASTNAME with your own first and last name
 #include "Henry_Chen_project3.h"
@@ -137,7 +140,50 @@ const string who_am_i() {
 
 // Do not modify this function signature.
 vector<int> weird_traversal(TreeNode* root) {
-    // Your code here!
+    stack<TreeNode*> odd_layer = {};
+    queue<pair<TreeNode*, int>> to_visit = {};
+    vector<int> result = {};
+
+    // If root is empty at start
+    if (root == nullptr) {
+        return result;
+    }
+
+    // Start the queue with the root
+    to_visit.push({root, 0});
+
+    // Traverse the tree with BST, each layer one by one
+    while(!to_visit.empty()) {
+
+        // Grab the current node and its layer position
+        TreeNode* curr = to_visit.front().first;
+        int layer = to_visit.front().second;
+        to_visit.pop();
+
+        // If its even layer, immediately add it to the result
+        if (layer % 2 == 0) {
+                result.push_back(curr->id);
+            }
+        // If its odd layer, add it to the odd layer stack
+        else {
+            odd_layer.push(curr);
+        }
+
+        // Add each children of curr node with its layer position to queue 
+        for (TreeNode* child = curr->first_child; child != nullptr; child = child->next_sibling) {
+            to_visit.push({child, layer + 1});
+        }
+
+    }
+
+    // Go through the odd layers from right to left using stack pop
+    while(!odd_layer.empty()) {
+        TreeNode * curr = odd_layer.top();
+        odd_layer.pop();
+        result.push_back(curr->id);
+    }
+
+    return result;
 }
 
 
@@ -207,6 +253,59 @@ vector<int> weird_traversal(TreeNode* root) {
 
 // Do not modify this fuction signature
 TreeNode* bits_to_tree(const vector<bool>& bits) {
+    TreeNode* root = new TreeNode{0, nullptr, nullptr};
+
+    // If tree is only root node
+    if (bits.size() == 0) {
+        return root;
+    }
+
+    // Keep track of traversal path
+    stack<TreeNode*> path;
+    path.push(root);
+    int next_id = 1;
+
+    // Go through each bit
+    for (bool bit : bits) {
+
+        // If "down" traversal
+        if (bit == 1) {
+            
+            // Create a new node with new id 
+            TreeNode * curr = path.top();
+            TreeNode* new_child = new TreeNode{next_id, nullptr, nullptr};
+            next_id = next_id + 1;
+
+            // Check if its firt child exists
+            if (curr->first_child == nullptr) {
+                curr->first_child = new_child;
+            }
+            // If first child already exists, keep going down the "next_sibling" until the end
+            else {
+                TreeNode * last_child = curr->first_child;
+                while(last_child->next_sibling) {
+                    last_child = last_child->next_sibling;
+                }
+                last_child->next_sibling = new_child;
+            }
+            
+            path.push(new_child);
+        }
+        // If "up" traversal
+        else {
+            // You can't go further "up" from the root node
+            if (path.size() == 1) {
+                return nullptr;
+            }
+            path.pop();
+        }
+    }
+
+    // Makes sure the given traversal is valid
+    if (path.size() != 1) {
+        return nullptr;
+    }
+    return root;
 }
 
 
@@ -313,7 +412,74 @@ TreeNode* bits_to_tree(const vector<bool>& bits) {
 */
 
 // Do not modify this function signature
+// Helper function to build a tree for a single value
+ParseTreeNode* parse_value(const string& expr, int& index) {
+    // If this is a NOT expression, build the NOT node first.
+    if (expr[index] == NOT) {
+        ParseTreeNode* node = new ParseTreeNode;
+        node->val = NOT;
+        node->left_child = nullptr;
+        node->right_child = nullptr;
+
+        index++;
+
+        node->left_child = parse_value(expr, index);
+
+        return node;
+    }
+
+    // If this starts with '(', parse everything inside the parentheses
+    if (expr[index] == '(') {
+        index++;
+
+        ParseTreeNode* node = parse_expression(expr, index);
+
+        // Move past the closing parenthesis
+        index++;
+
+        return node;
+    }
+
+    // Otherwise, this has to be a variable like a-z or A-Z
+    ParseTreeNode* node = new ParseTreeNode;
+    node->val = expr[index];
+    node->left_child = nullptr;
+    node->right_child = nullptr;
+
+    index++;
+
+    return node;
+}
+
+
+// Helper function to build a full expression.
+// AND and OR have the same precedence, so go through them left to right.
+ParseTreeNode* parse_expression(const string& expr, int& index) {
+    ParseTreeNode* left_tree = parse_value(expr, index);
+
+    while (index < expr.length() &&
+           (expr[index] == AND || expr[index] == OR)) {
+
+        char op = expr[index];
+        index++;
+
+        ParseTreeNode* right_tree = parse_value(expr, index);
+
+        ParseTreeNode* new_root = new ParseTreeNode;
+        new_root->val = op;
+        new_root->left_child = left_tree;
+        new_root->right_child = right_tree;
+
+        left_tree = new_root;
+    }
+
+    return left_tree;
+}
+
 ParseTreeNode* build_parse_tree(const string& expr) {
+    int index = 0;
+
+    return parse_expression(expr, index);
 }
 
 

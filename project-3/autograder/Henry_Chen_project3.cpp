@@ -412,7 +412,80 @@ TreeNode* bits_to_tree(const vector<bool>& bits) {
 */
 
 // Do not modify this function signature
+// Helper function to build a tree for a single value.
+// A value can be:
+// 1. a letter
+// 2. a NOT expression
+// 3. an expression inside parentheses
+ParseTreeNode* parse_value(const string& expr, int& index) {
+    // If this is a NOT expression, build the NOT node first.
+    if (expr[index] == NOT) {
+        ParseTreeNode* node = new ParseTreeNode;
+        node->val = NOT;
+        node->left_child = nullptr;
+        node->right_child = nullptr;
+
+        index++;
+
+        node->left_child = parse_value(expr, index);
+
+        return node;
+    }
+
+    // If this starts with '(', parse everything inside the parentheses.
+    if (expr[index] == '(') {
+        index++;
+
+        ParseTreeNode* node = parse_expression(expr, index);
+
+        // Move past the closing parenthesis.
+        index++;
+
+        return node;
+    }
+
+    // Otherwise, this must be a variable like a-z or A-Z.
+    ParseTreeNode* node = new ParseTreeNode;
+    node->val = expr[index];
+    node->left_child = nullptr;
+    node->right_child = nullptr;
+
+    index++;
+
+    return node;
+}
+
+
+// Helper function to build a full expression.
+// AND and OR have the same precedence, so process them left to right.
+ParseTreeNode* parse_expression(const string& expr, int& index) {
+    ParseTreeNode* left_tree = parse_value(expr, index);
+
+    while (index < expr.length() &&
+           (expr[index] == AND || expr[index] == OR)) {
+
+        char op = expr[index];
+        index++;
+
+        ParseTreeNode* right_tree = parse_value(expr, index);
+
+        ParseTreeNode* new_root = new ParseTreeNode;
+        new_root->val = op;
+        new_root->left_child = left_tree;
+        new_root->right_child = right_tree;
+
+        left_tree = new_root;
+    }
+
+    return left_tree;
+}
+
+
+// Do not modify this function signature
 ParseTreeNode* build_parse_tree(const string& expr) {
+    int index = 0;
+
+    return parse_expression(expr, index);
 }
 
 
