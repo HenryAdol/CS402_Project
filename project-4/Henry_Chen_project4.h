@@ -1,5 +1,5 @@
-#ifndef FIRSTNAME_LASTNAME_PROJECT4
-#define FIRSTNAME_LASTNAME_PROJECT4
+#ifndef Henry_Chen_PROJECT4
+#define Henry_Chen_PROJECT4
 
 #include <vector>
 #include <functional>

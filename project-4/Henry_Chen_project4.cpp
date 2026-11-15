@@ -1,12 +1,12 @@
 
 // be sure to change FIRSTNAME and LASTNAME with your own first and last name
-#include "Firstname_Lastname_project4.h"
+#include "Henry_Chen_project4.h"
 #include <string>
 
 using namespace std;
 
 const string who_am_i() {
-    return "Firstname_Lastname";
+    return "Henry_Chen";
 }
 
 /****************
