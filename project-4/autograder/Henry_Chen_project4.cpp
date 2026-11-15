@@ -3,6 +3,7 @@
 #include "Henry_Chen_project4.h"
 #include <string>
 #include <queue>
+#include <climits>
 
 using namespace std;
 
@@ -147,6 +148,48 @@ vector<int> topological_sort(int n, vector<Edge> edges) {
  *
  */
 vector<int> dag_single_source(int n, vector<Edge> edges, int source) {
+
+    // Set all distances to unreachable
+    vector<int> distance(n, INT_MAX);
+
+    // If its an empty graph
+    if (n == 0) {
+        return distance;
+    }
+
+    // Distance from source to itself is 0
+    distance[source] = 0;
+
+    // Get the nodes in topological order
+    vector<int> order = topological_sort(n, edges);
+
+    // Process each node in topological order
+    for (int i = 0; i < order.size(); ++i) {
+        int curr = order[i];
+
+        // Skip nodes that cannot be reached from source
+        if (distance[curr] == INT_MAX) {
+            continue;
+        }
+
+        // Find all outgoing edges from curr
+        for (int j = 0; j < edges.size(); ++j) {
+            if (edges[j].from == curr) {
+                int neighbor = edges[j].to;
+
+                // Use long long for the addition
+                long long new_distance =
+                    (long long)distance[curr] + edges[j].weight;
+
+                // Update if this path is shorter
+                if (new_distance < distance[neighbor]) {
+                    distance[neighbor] = new_distance;
+                }
+            }
+        }
+    }
+
+    return distance;
 }
 
 
