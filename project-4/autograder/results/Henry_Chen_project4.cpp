@@ -2,17 +2,15 @@ Project 4 Test Results
 
 TestCase                                Result
 ================================================================
-a-star-empty.cpp                        0.0/1 (Wrong answer)
-a-star.cpp                              Crashed due to signal -11:
-
-
+a-star-empty.cpp                        1/1
+a-star.cpp                              24/24
 dag-single-source-empty.cpp             1/1
 dag-single-source.cpp                   14/14
 dijkstras-empty.cpp                     1/1
 dijkstras.cpp                           24/24
 topological-sort.cpp                    10/10
 ================================================================
-Result: 50/75
+Result: 75/75
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error

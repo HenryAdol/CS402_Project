@@ -2,6 +2,9 @@
 // be sure to change FIRSTNAME and LASTNAME with your own first and last name
 #include "Henry_Chen_project4.h"
 #include <string>
+#include <queue>
+#include <climits>
+#include <limits>
 
 using namespace std;
 
@@ -70,7 +73,51 @@ const string who_am_i() {
 
 
 vector<int> topological_sort(int n, vector<Edge> edges) {
-    // Your code here!
+
+    // Find indgree for all nodes
+    vector<int> indegree(n, 0);
+
+    for (int i = 0; i < edges.size(); ++i) {
+        indegree[edges[i].to]++;
+    }
+
+
+    // Finds all nodes that has indegree 0
+    queue<int> start_nodes;
+
+    for (int node = 0; node < n; ++node) {
+        if (indegree[node] == 0) {
+            start_nodes.push(node);
+        }
+    }
+
+    // Search for a valid topological sort
+    vector<int> result;
+
+    while (!start_nodes.empty()) {
+        int curr = start_nodes.front();
+        start_nodes.pop();
+
+        result.push_back(curr);
+        
+        for (int i = 0; i < edges.size(); i++) {
+            if (edges[i].from == curr) {
+                int neighbor = edges[i].to;
+                indegree[neighbor]--;
+            
+                if (indegree[neighbor] == 0) {
+                start_nodes.push(neighbor);
+                }
+            }
+        }
+
+    }
+
+    if (result.size() != n) {
+        return {}; 
+    }
+    
+    return result;
 }
 
 
@@ -102,6 +149,48 @@ vector<int> topological_sort(int n, vector<Edge> edges) {
  *
  */
 vector<int> dag_single_source(int n, vector<Edge> edges, int source) {
+
+    // Set all distances to unreachable
+    vector<int> distance(n, INT_MAX);
+
+    // If its an empty graph
+    if (n == 0) {
+        return distance;
+    }
+
+    // Distance from source to itself is 0
+    distance[source] = 0;
+
+    // Get the nodes in topological order
+    vector<int> order = topological_sort(n, edges);
+
+    // Process each node in topological order
+    for (int i = 0; i < order.size(); ++i) {
+        int curr = order[i];
+
+        // Skip nodes that cannot be reached from source
+        if (distance[curr] == INT_MAX) {
+            continue;
+        }
+
+        // Find all outgoing edges from curr
+        for (int j = 0; j < edges.size(); ++j) {
+            if (edges[j].from == curr) {
+                int neighbor = edges[j].to;
+
+                // Use long long for the addition
+                long long new_distance =
+                    (long long)distance[curr] + edges[j].weight;
+
+                // Update if this path is shorter
+                if (new_distance < distance[neighbor]) {
+                    distance[neighbor] = new_distance;
+                }
+            }
+        }
+    }
+
+    return distance;
 }
 
 
@@ -137,7 +226,56 @@ vector<Node> dijkstras_algorithm(int n, vector<Edge> edges, int source) {
     // Your code here!
     // Note: see the LeetCode from in-class for the problem "Cheapest Flights
     // K stops" to see how you can create a priority_queue with the Node struct.
-    
+
+    // Create one result entry for each node
+    vector<Node> result(n);
+
+    for (int i = 0; i < n; ++i) {
+        result[i].id = i;
+        result[i].path_cost = INT_MAX;
+        result[i].pred = -1;
+    }
+
+    // Handle an empty graph or invalid source
+    if (source < 0 || source >= n) {
+        return result;
+    }
+
+    // Smallest path_cost comes out first
+    priority_queue<Node, vector<Node>, greater<Node>> frontier;
+
+    result[source].path_cost = 0;
+    frontier.push(result[source]);
+
+    while (!frontier.empty()) {
+        Node curr = frontier.top();
+        frontier.pop();
+
+        // Skip an older entry if we already found a cheaper path
+        if (curr.path_cost > result[curr.id].path_cost) {
+            continue;
+        }
+
+        // Find all outgoing edges from curr
+        for (int i = 0; i < edges.size(); ++i) {
+            if (edges[i].from == curr.id) {
+                int neighbor = edges[i].to;
+
+                long long new_distance =
+                    (long long)curr.path_cost + edges[i].weight;
+
+                // Update the neighbor if this route is cheaper
+                if (new_distance < result[neighbor].path_cost) {
+                    result[neighbor].path_cost = (int)new_distance;
+                    result[neighbor].pred = curr.id;
+
+                    frontier.push(result[neighbor]);
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 
@@ -238,6 +376,21 @@ vector<Node> dijkstras_algorithm(int n, vector<Edge> edges, int source) {
 // You must implement this function.
 double heuristic_cost(GridNode start, GridNode dest) {
     // Your code here!
+    int dx = abs(start.x - dest.x);
+    int dy = abs(start.y - dest.y);
+
+    int diagonal;
+    int straight;
+
+    if (dx < dy) {
+        diagonal = dx;
+        straight = dy - dx;
+    } else {
+        diagonal = dy;
+        straight = dx - dy;
+    }
+
+    return diagonal * 1.5 + straight;
 }
 
 // To test your algorithm with the function "heruistic_cost" above,
@@ -255,6 +408,118 @@ vector<GridNode> a_star_algorithm(
     // Be sure to use "h" from the inputs in your implementation; do not
     // directly use "heruistic_cost" above!
 
+    // Handles an empty grid
+    if (m <= 0 || n <= 0) {
+        return {};
+    }
+
+    // Check source and target coordinates
+    if (source.x < 0 || source.x >= m ||
+        source.y < 0 || source.y >= n ||
+        target.x < 0 || target.x >= m ||
+        target.y < 0 || target.y >= n) {
+        return {};
+    }
+
+    // Access each grid node using x and y
+    vector<vector<GridNode>> nodes(m, vector<GridNode>(n));
+
+    for (int x = 0; x < m; ++x) {
+        for (int y = 0; y < n; ++y) {
+            nodes[x][y].x = x;
+            nodes[x][y].y = y;
+            nodes[x][y].path_cost =
+                numeric_limits<double>::infinity();
+            nodes[x][y].pred_x = -1;
+            nodes[x][y].pred_y = -1;
+        }
+    }
+
+    // Queue copies store actual cost + heuristic
+    priority_queue<GridNode, vector<GridNode>, greater<GridNode>>
+        frontier;
+
+    nodes[source.x][source.y].path_cost = 0;
+
+    GridNode start = nodes[source.x][source.y];
+    start.path_cost = h(start, target);
+    frontier.push(start);
+
+    while (!frontier.empty()) {
+        GridNode queued = frontier.top();
+        frontier.pop();
+
+        // Retrieve the node with its actual path cost
+        GridNode curr = nodes[queued.x][queued.y];
+
+        double current_priority =
+            curr.path_cost + h(curr, target);
+
+        // Skip an outdated queue entry
+        if (queued.path_cost > current_priority) {
+            continue;
+        }
+
+        // Find all outgoing edges from curr
+        for (int i = 0; i < edges.size(); ++i) {
+            if (edges[i].from_x == curr.x &&
+                edges[i].from_y == curr.y) {
+
+                int next_x = edges[i].to_x;
+                int next_y = edges[i].to_y;
+
+                double weight = 1.0;
+
+                // Both coordinates change for a diagonal move
+                if (next_x != curr.x && next_y != curr.y) {
+                    weight = 1.5;
+                }
+
+                double new_distance = curr.path_cost + weight;
+
+                if (new_distance < nodes[next_x][next_y].path_cost) {
+                    nodes[next_x][next_y].path_cost = new_distance;
+                    nodes[next_x][next_y].pred_x = curr.x;
+                    nodes[next_x][next_y].pred_y = curr.y;
+
+                    // Change only the queue copy to hold priority
+                    GridNode next = nodes[next_x][next_y];
+                    next.path_cost =
+                        new_distance + h(next, target);
+
+                    frontier.push(next);
+                }
+            }
+        }
+    }
+
+    // No route reached the target
+    if (nodes[target.x][target.y].path_cost ==
+        numeric_limits<double>::infinity()) {
+        return {};
+    }
+
+    // Follow predecessors backward from target to source
+    vector<GridNode> result;
+    GridNode curr = nodes[target.x][target.y];
+
+    while (true) {
+        result.push_back(curr);
+
+        if (curr.x == source.x && curr.y == source.y) {
+            break;
+        }
+
+        int previous_x = curr.pred_x;
+        int previous_y = curr.pred_y;
+
+        curr = nodes[previous_x][previous_y];
+    }
+
+    // Change target-to-source order into source-to-target order
+    reverse(result.begin(), result.end());
+
+    return result;
 }
 
 int main() {
