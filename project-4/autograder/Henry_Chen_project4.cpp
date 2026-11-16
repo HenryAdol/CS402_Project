@@ -225,7 +225,55 @@ vector<Node> dijkstras_algorithm(int n, vector<Edge> edges, int source) {
     // Your code here!
     // Note: see the LeetCode from in-class for the problem "Cheapest Flights
     // K stops" to see how you can create a priority_queue with the Node struct.
-    
+    // Create one result entry for each node
+    vector<Node> result(n);
+
+    for (int i = 0; i < n; ++i) {
+        result[i].id = i;
+        result[i].path_cost = INT_MAX;
+        result[i].pred = -1;
+    }
+
+    // Handle an empty graph or invalid source
+    if (source < 0 || source >= n) {
+        return result;
+    }
+
+    // Smallest path_cost comes out first
+    priority_queue<Node, vector<Node>, greater<Node>> frontier;
+
+    result[source].path_cost = 0;
+    frontier.push(result[source]);
+
+    while (!frontier.empty()) {
+        Node curr = frontier.top();
+        frontier.pop();
+
+        // Skip an older entry if we already found a cheaper path
+        if (curr.path_cost > result[curr.id].path_cost) {
+            continue;
+        }
+
+        // Find all outgoing edges from curr
+        for (int i = 0; i < edges.size(); ++i) {
+            if (edges[i].from == curr.id) {
+                int neighbor = edges[i].to;
+
+                long long new_distance =
+                    (long long)curr.path_cost + edges[i].weight;
+
+                // Update the neighbor if this route is cheaper
+                if (new_distance < result[neighbor].path_cost) {
+                    result[neighbor].path_cost = (int)new_distance;
+                    result[neighbor].pred = curr.id;
+
+                    frontier.push(result[neighbor]);
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 
@@ -326,6 +374,21 @@ vector<Node> dijkstras_algorithm(int n, vector<Edge> edges, int source) {
 // You must implement this function.
 double heuristic_cost(GridNode start, GridNode dest) {
     // Your code here!
+    int dx = abs(start.x - dest.x);
+    int dy = abs(start.y - dest.y);
+
+    int diagonal;
+    int straight;
+
+    if (dx < dy) {
+        diagonal = dx;
+        straight = dy - dx;
+    } else {
+        diagonal = dy;
+        straight = dx - dy;
+    }
+
+    return diagonal * 1.5 + straight;
 }
 
 // To test your algorithm with the function "heruistic_cost" above,
